@@ -71,6 +71,9 @@ class QuestionService:
     def create_question(self, payload: QuestionCreateRequest) -> Question:
         self._validate_subject_pair(payload.main_subject, payload.sub_subject)
         self.ensure_not_duplicate(payload.question_text)
+        deleted_question = self.find_deleted_question(payload.question_text)
+        if deleted_question is not None:
+            return self.restore_deleted_question(deleted_question, payload)
         question = Question(**payload.model_dump(mode="json"))
         self.db.add(question)
         self.db.commit()
@@ -161,7 +164,37 @@ class QuestionService:
         if existing:
             raise ConflictError(f"题目已存在，ID={existing.id}", code=4091)
 
+    def find_deleted_question(self, question_text: str) -> Question | None:
+        normalized = self._normalize_question_text(question_text)
+        deleted_questions = self.db.scalars(
+            select(Question)
+            .where(Question.is_deleted.is_(True))
+            .order_by(Question.updated_at.desc())
+        ).all()
+
+        for question in deleted_questions:
+            if self._normalize_question_text(question.question_text) == normalized:
+                return question
+        return None
+
+    def restore_deleted_question(
+        self,
+        deleted_question: Question,
+        payload: QuestionCreateRequest,
+    ) -> Question:
+        for key, value in payload.model_dump(mode="json").items():
+            setattr(deleted_question, key, value)
+        deleted_question.is_deleted = False
+        self.db.add(deleted_question)
+        self.db.commit()
+        self.db.refresh(deleted_question)
+        return deleted_question
+
     @staticmethod
     def _validate_subject_pair(main_subject: str, sub_subject: str) -> None:
         if sub_subject not in SUBJECT_MAPPING.get(main_subject, set()):
             raise ValidationAppError("主科目与子科目不匹配", code=4002)
+
+    @staticmethod
+    def _normalize_question_text(question_text: str) -> str:
+        return "".join(question_text.split())
