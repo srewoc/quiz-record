@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, String, Text, func
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -26,7 +26,11 @@ class Question(Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    )
     question_text: Mapped[str] = mapped_column(Text, nullable=False)
     main_subject: Mapped[str] = mapped_column(String(32), nullable=False)
     sub_subject: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -33,6 +33,8 @@ frontend/coverage/
 # Logs
 *.log
 
+# Local uploads
+backend/uploads/
+
 # Claude Code
 .codex
-
