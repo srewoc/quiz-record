@@ -120,7 +120,7 @@ class LLMClient:
             "如果已存在，返回 exists=true 和 matched_question_id。"
             "如果不存在，请识别主科目与子科目。"
             f"主科目只能是：{', '.join(SUBJECT_MAPPING.keys())}。"
-            "子科目只能是：数学-高数、数学-线代、数学-概率论、408-数据结构、408-计组、408-操作系统、408-计网。"
+            "子科目只能是：高数、线代、概率论、数据结构、计组、操作系统、计网。"
             '返回 JSON 格式：{"exists": boolean, "matched_question_id": number|null, '
             '"main_subject": string|null, "sub_subject": string|null, "reason": string}。'
             f"\n输入题目：{question_text}"
@@ -138,8 +138,7 @@ class LLMClient:
             '返回字段必须使用内部字段名：{"exists": boolean, "matched_question_id": number|null, '
             '"main_subject": string|null, "sub_subject": string|null, "reason": string}。'
             'main_subject 只能取值 "数学" 或 "408"。'
-            "sub_subject 只能取值：数学-高数、数学-线代、数学-概率论、"
-            "408-数据结构、408-计组、408-操作系统、408-计网。"
+            "sub_subject 只能取值：高数、线代、概率论、数据结构、计组、操作系统、计网。"
             "当 exists 为 true 时，必须返回 matched_question_id。"
             "当 exists 为 false 时，matched_question_id 返回 null。"
         )

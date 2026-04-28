@@ -5,8 +5,8 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SUBJECT_MAPPING = {
-    "数学": {"数学-高数", "数学-线代", "数学-概率论"},
-    "408": {"408-数据结构", "408-计组", "408-操作系统", "408-计网"},
+    "数学": {"高数", "线代", "概率论"},
+    "408": {"数据结构", "计组", "操作系统", "计网"},
 }
 
 
@@ -78,9 +78,12 @@ class QuestionResponse(QuestionBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+
+class QuestionCandidateResponse(QuestionResponse):
+    similarity_score: float = 0.0
 
 
 class QuestionListQuery(BaseModel):
@@ -122,3 +125,8 @@ class QuestionImageSearchResponse(BaseModel):
     candidates: list[QuestionResponse]
     deduplicate_result: DeduplicateResultResponse
     matched_question: QuestionResponse | None = None
+
+
+class QuestionImageCandidateSearchResponse(BaseModel):
+    ocr_text: str
+    candidates: list[QuestionCandidateResponse]

@@ -361,6 +361,34 @@ p {
   margin-bottom: 8px;
 }
 
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f5f8ff;
+}
+
+.segmented-control button {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented-control .segmented-active {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 8px 18px rgba(18, 35, 66, 0.08);
+}
+
 .filters-grid,
 .two-column-grid {
   display: grid;
@@ -370,6 +398,26 @@ p {
 
 .filters-grid {
   margin-bottom: 20px;
+}
+
+.image-search-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.image-search-upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-search-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .field {
@@ -574,8 +622,36 @@ p {
   border-top: 1px dashed var(--border);
 }
 
+.question-image-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f7faff;
+  overflow: hidden;
+}
+
+.question-image-content {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: #fff;
+}
+
 .inline-link {
   color: var(--accent);
+}
+
+.inline-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
 }
 
 .empty-state {
@@ -676,8 +752,57 @@ p {
   word-break: break-word;
 }
 
+.image-search-ocr-text {
+  margin-bottom: 16px;
+}
+
 .compact-empty-state {
   padding: 20px 16px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(9, 20, 42, 0.46);
+}
+
+.modal-panel {
+  width: min(760px, 100%);
+  max-height: min(860px, calc(100vh - 56px));
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 28px 80px rgba(9, 20, 42, 0.26);
+  padding: 28px;
+}
+
+.image-preview-modal {
+  width: min(980px, 100%);
+}
+
+.image-preview-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f7faff;
+  overflow: hidden;
+}
+
+.image-preview-content {
+  display: block;
+  max-width: 100%;
+  max-height: min(68vh, 720px);
+  object-fit: contain;
+  background: #fff;
 }
 
 @media (max-width: 860px) {

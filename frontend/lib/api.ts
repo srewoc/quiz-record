@@ -3,6 +3,7 @@ import type {
   DeduplicateResult,
   LLMConfig,
   LLMConfigActivateResult,
+  LLMConfigDeleteResult,
   LLMConfigListData,
   LLMConfigPayload,
   LLMConfigTestPayload,
@@ -11,6 +12,7 @@ import type {
   Question,
   QuestionDeleteResult,
   QuestionFilters,
+  QuestionImageCandidateSearchResult,
   QuestionImageRecognitionResult,
   QuestionListData,
   QuestionPayload
@@ -190,6 +192,12 @@ export function recognizeQuestionImage(file: File) {
   return requestFormData<QuestionImageRecognitionResult>("/questions/search/image", formData);
 }
 
+export function searchQuestionCandidatesByImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return requestFormData<QuestionImageCandidateSearchResult>("/questions/search/image-candidates", formData);
+}
+
 export function resolveAssetUrl(url: string | null | undefined) {
   if (!url) {
     return null;
@@ -228,6 +236,12 @@ export function updateLLMConfig(id: string | number, payload: LLMConfigPayload) 
 export function activateLLMConfig(id: string | number) {
   return request<LLMConfigActivateResult>(`/llm-configs/${id}/activate`, {
     method: "POST"
+  });
+}
+
+export function deleteLLMConfig(id: string | number) {
+  return request<LLMConfigDeleteResult>(`/llm-configs/${id}`, {
+    method: "DELETE"
   });
 }
 

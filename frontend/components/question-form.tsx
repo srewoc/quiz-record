@@ -75,6 +75,7 @@ export function QuestionForm({ mode, questionId }: QuestionFormProps) {
   const [saving, setSaving] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [createStage, setCreateStage] = useState<CreateStage>("upload");
   const [recognitionResult, setRecognitionResult] = useState<QuestionImageRecognitionResult | null>(null);
@@ -88,6 +89,20 @@ export function QuestionForm({ mode, questionId }: QuestionFormProps) {
   const resolvedImageUrl = resolveAssetUrl(form.image_url);
   const matchedQuestionId = recognitionResult?.deduplicate_result.matched_question_id ?? null;
   const showEditableForm = mode === "edit" || createStage === "confirm";
+
+  useEffect(() => {
+    if (!selectedFile) {
+      setSelectedFilePreviewUrl(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(selectedFile);
+    setSelectedFilePreviewUrl(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [selectedFile]);
 
   useEffect(() => {
     if (mode !== "edit" || !questionId) {
@@ -305,6 +320,22 @@ export function QuestionForm({ mode, questionId }: QuestionFormProps) {
                   由系统自动生成。
                 </small>
               </label>
+
+              {selectedFilePreviewUrl ? (
+                <div className="upload-preview-layout">
+                  <div className="upload-preview-frame">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedFilePreviewUrl}
+                      alt="待上传题目图片预览"
+                      className="upload-preview-image"
+                    />
+                  </div>
+                  <div className="readonly-block">
+                    已选择图片：{selectedFile?.name}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="form-actions">
                 <button

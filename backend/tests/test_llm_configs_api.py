@@ -117,3 +117,27 @@ def test_activate_only_deactivates_configs_in_same_module(client) -> None:
     assert question_active[0]["id"] == 3
     assert len(ocr_active) == 1
     assert ocr_active[0]["id"] == 2
+
+
+def test_delete_llm_config(client) -> None:
+    create_response = client.post(
+        "/api/v1/llm-configs",
+        json={
+            "config_name": "delete-me",
+            "module_type": "question_analysis",
+            "provider_type": "openai",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "sk-delete-key",
+            "model_name": "gpt-4o-mini",
+            "is_active": False,
+        },
+    )
+    assert create_response.status_code == 201
+
+    delete_response = client.delete("/api/v1/llm-configs/1")
+    assert delete_response.status_code == 200
+    assert delete_response.json()["data"] == {"id": 1, "deleted": True}
+
+    list_response = client.get("/api/v1/llm-configs")
+    assert list_response.status_code == 200
+    assert list_response.json()["data"]["items"] == []

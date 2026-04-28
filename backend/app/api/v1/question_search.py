@@ -5,11 +5,39 @@ from sqlalchemy.orm import Session
 
 from app.core.response import success_response
 from app.db.deps import get_db
+from app.schemas.question import QuestionCandidateResponse
 from app.services.image_storage import ImageStorageService
 from app.services.ocr import OCRService
 from app.services.question_service import QuestionService
 
 router = APIRouter(prefix="/questions/search", tags=["question-search"])
+
+
+@router.post("/image-candidates")
+async def search_question_candidates_by_image(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    ocr_text = await OCRService(db).extract_markdown(file.file, file.content_type)
+    candidates = QuestionService(db).find_candidates(ocr_text, limit=20)
+
+    return success_response(
+        {
+            "ocr_text": ocr_text,
+            "candidates": [
+                QuestionCandidateResponse.model_validate(candidate)
+                .model_copy(
+                    update={
+                        "similarity_score": round(
+                            float(getattr(candidate, "similarity_score", 0.0)), 6
+                        )
+                    }
+                )
+                .model_dump(mode="json")
+                for candidate in candidates
+            ],
+        }
+    )
 
 
 @router.post("/image")

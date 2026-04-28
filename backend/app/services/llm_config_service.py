@@ -69,6 +69,12 @@ class LLMConfigService:
         self.db.commit()
         return LLMConfigActivateResponse(id=config.id, is_active=True)
 
+    def delete_config(self, config_id: int) -> dict[str, object]:
+        config = self._get_model(config_id)
+        self.db.delete(config)
+        self.db.commit()
+        return {"id": config_id, "deleted": True}
+
     def get_active_config(self, module_type: str) -> LLMConfig | None:
         return self.db.scalar(
             select(LLMConfig).where(

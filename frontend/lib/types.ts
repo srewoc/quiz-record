@@ -1,8 +1,8 @@
 export const MAIN_SUBJECT_OPTIONS = ["数学", "408"] as const;
 
 export const SUB_SUBJECT_OPTIONS = {
-  数学: ["数学-高数", "数学-线代", "数学-概率论"],
-  "408": ["408-数据结构", "408-计组", "408-操作系统", "408-计网"]
+  数学: ["高数", "线代", "概率论"],
+  "408": ["数据结构", "计组", "操作系统", "计网"]
 } as const;
 
 export const PROVIDER_OPTIONS = ["openai"] as const;
@@ -44,7 +44,6 @@ export type Question = {
   is_wrong: boolean;
   image_url: string | null;
   reference_answer: string | null;
-  is_deleted: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -73,6 +72,10 @@ export type QuestionListData = {
   pagination: Pagination;
 };
 
+export type QuestionCandidate = Question & {
+  similarity_score: number;
+};
+
 export type QuestionDeleteResult = {
   id: number;
   deleted: boolean;
@@ -92,6 +95,11 @@ export type QuestionImageRecognitionResult = {
   candidates: Question[];
   deduplicate_result: DeduplicateResult;
   matched_question: Question | null;
+};
+
+export type QuestionImageCandidateSearchResult = {
+  ocr_text: string;
+  candidates: QuestionCandidate[];
 };
 
 export type LLMConfig = {
@@ -124,6 +132,11 @@ export type LLMConfigListData = {
 export type LLMConfigActivateResult = {
   id: number;
   is_active: boolean;
+};
+
+export type LLMConfigDeleteResult = {
+  id: number;
+  deleted: boolean;
 };
 
 export type LLMConfigTestPayload = {

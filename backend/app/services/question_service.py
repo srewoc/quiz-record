@@ -23,8 +23,8 @@ class QuestionService:
         self.llm_client = llm_client or LLMClient(db)
 
     def list_questions(self, query: QuestionListQuery) -> tuple[list[Question], int]:
-        statement: Select[tuple[Question]] = select(Question).where(Question.is_deleted.is_(False))
-        count_statement = select(func.count(Question.id)).where(Question.is_deleted.is_(False))
+        statement: Select[tuple[Question]] = select(Question)
+        count_statement = select(func.count(Question.id))
 
         if query.main_subject:
             statement = statement.where(Question.main_subject == query.main_subject)
@@ -61,9 +61,7 @@ class QuestionService:
         return items, total
 
     def get_question(self, question_id: int) -> Question:
-        question = self.db.scalar(
-            select(Question).where(Question.id == question_id, Question.is_deleted.is_(False))
-        )
+        question = self.db.scalar(select(Question).where(Question.id == question_id))
         if question is None:
             raise NotFoundError("题目不存在", code=4041)
         return question
@@ -71,9 +69,6 @@ class QuestionService:
     def create_question(self, payload: QuestionCreateRequest) -> Question:
         self._validate_subject_pair(payload.main_subject, payload.sub_subject)
         self.ensure_not_duplicate(payload.question_text)
-        deleted_question = self.find_deleted_question(payload.question_text)
-        if deleted_question is not None:
-            return self.restore_deleted_question(deleted_question, payload)
         question = Question(**payload.model_dump(mode="json"))
         self.db.add(question)
         self.db.commit()
@@ -92,8 +87,7 @@ class QuestionService:
 
     def delete_question(self, question_id: int) -> dict[str, object]:
         question = self.get_question(question_id)
-        question.is_deleted = True
-        self.db.add(question)
+        self.db.delete(question)
         self.db.commit()
         return {"id": question_id, "deleted": True}
 
@@ -103,10 +97,7 @@ class QuestionService:
         matched_question = None
         if deduplicate_result.matched_question_id is not None:
             matched_question = self.db.scalar(
-                select(Question).where(
-                    Question.id == deduplicate_result.matched_question_id,
-                    Question.is_deleted.is_(False),
-                )
+                select(Question).where(Question.id == deduplicate_result.matched_question_id)
             )
         return QuestionSearchResponse(
             input_text=question_text,
@@ -131,7 +122,6 @@ class QuestionService:
             similarity_score = func.similarity(Question.question_text, question_text)
             statement = (
                 select(Question, similarity_score.label("similarity_score"))
-                .where(Question.is_deleted.is_(False))
                 .order_by(similarity_score.desc(), Question.updated_at.desc())
                 .limit(safe_limit)
             )
@@ -139,7 +129,6 @@ class QuestionService:
         else:
             statement = (
                 select(Question, literal(0.0).label("similarity_score"))
-                .where(Question.is_deleted.is_(False))
                 .order_by(Question.updated_at.desc())
                 .limit(safe_limit)
             )
@@ -164,37 +153,7 @@ class QuestionService:
         if existing:
             raise ConflictError(f"题目已存在，ID={existing.id}", code=4091)
 
-    def find_deleted_question(self, question_text: str) -> Question | None:
-        normalized = self._normalize_question_text(question_text)
-        deleted_questions = self.db.scalars(
-            select(Question)
-            .where(Question.is_deleted.is_(True))
-            .order_by(Question.updated_at.desc())
-        ).all()
-
-        for question in deleted_questions:
-            if self._normalize_question_text(question.question_text) == normalized:
-                return question
-        return None
-
-    def restore_deleted_question(
-        self,
-        deleted_question: Question,
-        payload: QuestionCreateRequest,
-    ) -> Question:
-        for key, value in payload.model_dump(mode="json").items():
-            setattr(deleted_question, key, value)
-        deleted_question.is_deleted = False
-        self.db.add(deleted_question)
-        self.db.commit()
-        self.db.refresh(deleted_question)
-        return deleted_question
-
     @staticmethod
     def _validate_subject_pair(main_subject: str, sub_subject: str) -> None:
         if sub_subject not in SUBJECT_MAPPING.get(main_subject, set()):
             raise ValidationAppError("主科目与子科目不匹配", code=4002)
-
-    @staticmethod
-    def _normalize_question_text(question_text: str) -> str:
-        return "".join(question_text.split())

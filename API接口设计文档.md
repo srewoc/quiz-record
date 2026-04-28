@@ -98,13 +98,13 @@
 - `408`
 
 ### 3.2 子科目枚举
-- `数学-高数`
-- `数学-线代`
-- `数学-概率论`
-- `408-数据结构`
-- `408-计组`
-- `408-操作系统`
-- `408-计网`
+- `高数`
+- `线代`
+- `概率论`
+- `数据结构`
+- `计组`
+- `操作系统`
+- `计网`
 
 ### 3.3 LLM 供应商枚举
 - `openai`
@@ -117,11 +117,10 @@
   "id": 1,
   "question_text": "设函数 f(x) = ...",
   "main_subject": "数学",
-  "sub_subject": "数学-高数",
+  "sub_subject": "高数",
   "is_wrong": true,
   "image_url": "https://example.com/question.png",
   "reference_answer": "## 解答\n\n先求导...",
-  "is_deleted": false,
   "created_at": "2026-04-22T10:00:00+08:00",
   "updated_at": "2026-04-22T11:00:00+08:00"
 }
@@ -148,7 +147,7 @@
   "exists": true,
   "matched_question_id": 10,
   "main_subject": "数学",
-  "sub_subject": "数学-高数",
+  "sub_subject": "高数",
   "reason": "与题库中第 10 题语义一致"
 }
 ```
@@ -184,11 +183,10 @@
         "id": 1,
         "question_text": "设函数 f(x) = ...",
         "main_subject": "数学",
-        "sub_subject": "数学-高数",
+        "sub_subject": "高数",
         "is_wrong": true,
         "image_url": "https://example.com/question.png",
         "reference_answer": "## 解答\n\n先求导...",
-        "is_deleted": false,
         "created_at": "2026-04-22T10:00:00+08:00",
         "updated_at": "2026-04-22T11:00:00+08:00"
       }
@@ -204,7 +202,7 @@
 ```
 
 #### 业务规则
-- 默认仅返回 `is_deleted = false` 的记录。
+- 仅返回当前数据库中存在的题目记录。
 - 默认按 `updated_at desc` 排序。
 
 ### 5.2 获取题目详情
@@ -224,7 +222,6 @@
 
 #### 失败场景
 - 题目不存在返回 `4041`。
-- 已逻辑删除题目默认视为不存在。
 
 ### 5.3 新增题目
 
@@ -237,7 +234,7 @@
 {
   "question_text": "设函数 f(x) = ...",
   "main_subject": "数学",
-  "sub_subject": "数学-高数",
+  "sub_subject": "高数",
   "is_wrong": true,
   "image_url": "https://example.com/question.png",
   "reference_answer": "## 解答\n\n先求导..."
@@ -293,7 +290,7 @@
 
 #### 接口定义
 - 方法：`DELETE /questions/{id}`
-- 用途：逻辑删除题目
+- 用途：删除题目
 
 #### Path 参数
 
@@ -314,8 +311,8 @@
 ```
 
 #### 业务规则
-- 实际执行为 `is_deleted = true`
-- 删除后更新时间应刷新
+- 实际执行数据库物理删除。
+- 删除后同题干可重新新增为新记录。
 
 ## 6. 题目检索与查重接口
 
@@ -344,11 +341,10 @@
         "id": 10,
         "question_text": "设函数 f(x) = ...",
         "main_subject": "数学",
-        "sub_subject": "数学-高数",
+        "sub_subject": "高数",
         "is_wrong": false,
         "image_url": null,
         "reference_answer": null,
-        "is_deleted": false,
         "created_at": "2026-04-22T10:00:00+08:00",
         "updated_at": "2026-04-22T10:00:00+08:00"
       }
@@ -357,18 +353,17 @@
       "exists": true,
       "matched_question_id": 10,
       "main_subject": "数学",
-      "sub_subject": "数学-高数",
+      "sub_subject": "高数",
       "reason": "与题库中第 10 题语义一致"
     },
     "matched_question": {
       "id": 10,
       "question_text": "设函数 f(x) = ...",
       "main_subject": "数学",
-      "sub_subject": "数学-高数",
+      "sub_subject": "高数",
       "is_wrong": false,
       "image_url": null,
       "reference_answer": null,
-      "is_deleted": false,
       "created_at": "2026-04-22T10:00:00+08:00",
       "updated_at": "2026-04-22T10:00:00+08:00"
     }
@@ -377,7 +372,7 @@
 ```
 
 #### 业务规则
-- 仅返回未逻辑删除题目候选。
+- 仅返回当前数据库中存在的题目候选。
 - `candidates` 最多 20 条。
 - 若 LLM 未配置，返回 `5023`。
 
@@ -603,9 +598,8 @@
 
 ### 9.1 题目接口
 - 列表分页、筛选、排序是否正确
-- 已逻辑删除题目是否被默认过滤
 - 修改后更新时间是否刷新
-- 删除后是否不可见但仍保留数据
+- 删除后是否不可见且数据库记录已移除
 
 ### 9.2 检索接口
 - `pg_trgm` 候选是否最多返回 20 条

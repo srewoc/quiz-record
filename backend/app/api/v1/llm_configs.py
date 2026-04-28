@@ -46,6 +46,11 @@ def activate_llm_config(config_id: int, db: Session = Depends(get_db)) -> dict[s
     return success_response(result.model_dump(mode="json"))
 
 
+@router.delete("/{config_id}")
+def delete_llm_config(config_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
+    return success_response(LLMConfigService(db).delete_config(config_id))
+
+
 @router.post("/test")
 def test_llm_config(
     payload: LLMConfigTestRequest,

@@ -29,7 +29,6 @@ def upgrade() -> None:
         sa.Column("is_wrong", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("image_url", sa.Text(), nullable=True),
         sa.Column("reference_answer", sa.Text(), nullable=True),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -47,15 +46,15 @@ def upgrade() -> None:
             name="ck_questions_main_subject",
         ),
         sa.CheckConstraint(
-            "sub_subject IN ('数学-高数', '数学-线代', '数学-概率论', "
-            "'408-数据结构', '408-计组', '408-操作系统', '408-计网')",
+            "sub_subject IN ('高数', '线代', '概率论', "
+            "'数据结构', '计组', '操作系统', '计网')",
             name="ck_questions_sub_subject",
         ),
         sa.CheckConstraint(
-            "(main_subject = '数学' AND sub_subject IN ('数学-高数', '数学-线代', '数学-概率论')) "
+            "(main_subject = '数学' AND sub_subject IN ('高数', '线代', '概率论')) "
             "OR "
             "(main_subject = '408' AND sub_subject IN "
-            "('408-数据结构', '408-计组', '408-操作系统', '408-计网'))",
+            "('数据结构', '计组', '操作系统', '计网'))",
             name="ck_questions_subject_consistency",
         ),
     )
@@ -89,7 +88,6 @@ def upgrade() -> None:
         CREATE INDEX idx_questions_question_text_trgm
         ON questions
         USING gin (question_text gin_trgm_ops)
-        WHERE is_deleted = false
         """
     )
     op.create_index(
@@ -97,28 +95,24 @@ def upgrade() -> None:
         "questions",
         ["updated_at"],
         unique=False,
-        postgresql_where=sa.text("is_deleted = false"),
     )
     op.create_index(
         "idx_questions_main_subject",
         "questions",
         ["main_subject"],
         unique=False,
-        postgresql_where=sa.text("is_deleted = false"),
     )
     op.create_index(
         "idx_questions_sub_subject",
         "questions",
         ["sub_subject"],
         unique=False,
-        postgresql_where=sa.text("is_deleted = false"),
     )
     op.create_index(
         "idx_questions_is_wrong",
         "questions",
         ["is_wrong"],
         unique=False,
-        postgresql_where=sa.text("is_deleted = false"),
     )
     op.create_index("idx_llm_configs_updated_at", "llm_configs", ["updated_at"], unique=False)
     op.create_index("idx_llm_configs_provider_type", "llm_configs", ["provider_type"], unique=False)

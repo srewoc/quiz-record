@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -46,7 +47,7 @@ async def handle_app_error(_: Request, exc: AppError) -> JSONResponse:
 async def handle_validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse(
         status_code=400,
-        content={"code": 4001, "message": "参数校验失败", "data": exc.errors()},
+        content={"code": 4001, "message": "参数校验失败", "data": jsonable_encoder(exc.errors())},
     )
 
 

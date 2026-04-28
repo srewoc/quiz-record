@@ -9,8 +9,10 @@ from app.schemas.llm_config import (
 )
 from app.schemas.question import (
     DeduplicateResultResponse,
+    QuestionCandidateResponse,
     QuestionCreateRequest,
     QuestionDeduplicateRequest,
+    QuestionImageCandidateSearchResponse,
     QuestionImageSearchResponse,
     QuestionListQuery,
     QuestionResponse,
@@ -30,8 +32,10 @@ __all__ = [
     "LLMConfigTestRequest",
     "LLMConfigTestResponse",
     "LLMConfigUpdateRequest",
+    "QuestionCandidateResponse",
     "QuestionCreateRequest",
     "QuestionDeduplicateRequest",
+    "QuestionImageCandidateSearchResponse",
     "QuestionImageSearchResponse",
     "QuestionListQuery",
     "QuestionResponse",

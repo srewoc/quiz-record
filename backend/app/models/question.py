@@ -13,15 +13,15 @@ class Question(Base):
     __table_args__ = (
         CheckConstraint("main_subject IN ('数学', '408')", name="ck_questions_main_subject"),
         CheckConstraint(
-            "sub_subject IN ('数学-高数', '数学-线代', '数学-概率论', "
-            "'408-数据结构', '408-计组', '408-操作系统', '408-计网')",
+            "sub_subject IN ('高数', '线代', '概率论', "
+            "'数据结构', '计组', '操作系统', '计网')",
             name="ck_questions_sub_subject",
         ),
         CheckConstraint(
-            "(main_subject = '数学' AND sub_subject IN ('数学-高数', '数学-线代', '数学-概率论')) "
+            "(main_subject = '数学' AND sub_subject IN ('高数', '线代', '概率论')) "
             "OR "
             "(main_subject = '408' AND sub_subject IN "
-            "('408-数据结构', '408-计组', '408-操作系统', '408-计网'))",
+            "('数据结构', '计组', '操作系统', '计网'))",
             name="ck_questions_subject_consistency",
         ),
     )
@@ -42,12 +42,6 @@ class Question(Base):
     )
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     reference_answer: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_deleted: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
-        server_default="false",
-    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
