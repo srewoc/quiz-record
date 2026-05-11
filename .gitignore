@@ -36,5 +36,11 @@ frontend/coverage/
 # Local uploads
 backend/uploads/
 
-# Claude Code
+# Project documents not published to repository
+API接口设计文档.md
+数据库设计文档.md
+需求文档.md
+
+# Local AI assistant config
+.claude/
 .codex

@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>做题记录系统</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f5f7fb;
+        --surface: #ffffff;
+        --foreground: #172033;
+        --muted: #5f6b85;
+        --border: #d8dfec;
+        --accent: #0f6fff;
+        --accent-soft: #e7f0ff;
+        --danger: #d13d53;
+        --danger-soft: #fff0f3;
+        --success: #18794e;
+        --success-soft: #effbf4;
+        --info-soft: #eef4ff;
+        --shadow: 0 16px 40px rgba(18, 35, 66, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(180deg, #f8fbff 0%, #eef3fb 100%);
+        color: var(--foreground);
+        font-family: "Noto Sans SC", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      main {
+        width: 100%;
+      }
+
+      .app-shell-root {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 24px 20px 48px;
+      }
+
+      .app-frame {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .app-sidebar {
+        position: sticky;
+        top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .sidebar-brand {
+        background:
+          radial-gradient(circle at top right, rgba(15, 111, 255, 0.16), transparent 34%),
+          linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 255, 0.96));
+        border: 1px solid rgba(197, 214, 244, 0.95);
+        border-radius: 24px;
+        padding: 22px 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .sidebar-brand h2 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+
+      .sidebar-brand p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .sidebar-link {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px 18px;
+        border-radius: 20px;
+        border: 1px solid rgba(212, 221, 239, 0.95);
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 10px 24px rgba(18, 35, 66, 0.05);
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          border-color 0.18s ease,
+          background 0.18s ease;
+      }
+
+      .sidebar-link:hover {
+        transform: translateX(4px);
+        box-shadow: 0 14px 28px rgba(18, 35, 66, 0.08);
+        border-color: #bfd3fb;
+      }
+
+      .sidebar-link strong {
+        font-size: 15px;
+      }
+
+      .sidebar-link span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .sidebar-link-active {
+        background:
+          linear-gradient(135deg, rgba(15, 111, 255, 0.12), rgba(231, 240, 255, 0.95)),
+          rgba(255, 255, 255, 0.98);
+        border-color: rgba(15, 111, 255, 0.28);
+        box-shadow: 0 18px 36px rgba(15, 111, 255, 0.12);
+      }
+
+      .sidebar-link-active strong,
+      .sidebar-link-active span {
+        color: #13408e;
+      }
+
+      .app-main,
+      .app-content {
+        min-width: 0;
+      }
+
+      .mobile-shell-header {
+        display: none;
+      }
+
+      .mobile-shell-title {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .mobile-shell-title strong {
+        font-size: 15px;
+      }
+
+      .menu-toggle,
+      .drawer-close {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--foreground);
+        border-radius: 14px;
+        cursor: pointer;
+      }
+
+      .menu-toggle {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        box-shadow: 0 10px 24px rgba(18, 35, 66, 0.07);
+      }
+
+      .menu-toggle span {
+        width: 18px;
+        height: 2px;
+        background: var(--foreground);
+        border-radius: 999px;
+      }
+
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(9, 20, 42, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 40;
+      }
+
+      .drawer-backdrop-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .mobile-drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(320px, calc(100vw - 32px));
+        padding: 22px 18px 24px;
+        background:
+          linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(240, 245, 253, 0.98));
+        border-right: 1px solid rgba(211, 220, 238, 0.95);
+        box-shadow: 18px 0 36px rgba(9, 20, 42, 0.18);
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        z-index: 50;
+        overflow-y: auto;
+      }
+
+      .mobile-drawer-open {
+        transform: translateX(0);
+      }
+
+      .mobile-drawer-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .mobile-drawer-head h3 {
+        margin: 0;
+      }
+
+      .drawer-close {
+        min-width: 42px;
+        min-height: 42px;
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .hero {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero-compact {
+        margin-bottom: 20px;
+      }
+
+      .content-hero {
+        background:
+          linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 255, 0.96)),
+          radial-gradient(circle at top right, rgba(15, 111, 255, 0.1), transparent 40%);
+      }
+
+      .hero-topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: flex-start;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .hero h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .page-block {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+      }
+
+      .page-block p,
+      .page-block li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .section-heading h2,
+      .section-heading h3 {
+        margin-bottom: 8px;
+      }
+
+      .segmented-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #f5f8ff;
+      }
+
+      .segmented-control button {
+        appearance: none;
+        border: 0;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .segmented-control .segmented-active {
+        background: #fff;
+        color: var(--accent);
+        box-shadow: 0 8px 18px rgba(18, 35, 66, 0.08);
+      }
+
+      .filters-grid,
+      .two-column-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .filters-grid {
+        margin-bottom: 20px;
+      }
+
+      .image-search-panel {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .image-search-upload {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .image-search-upload input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field span {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: #fcfdff;
+        color: var(--foreground);
+        font: inherit;
+      }
+
+      .field textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .field-checkbox {
+        justify-content: center;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: #fbfcff;
+      }
+
+      .field-checkbox input {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+      }
+
+      .field small,
+      .muted-text {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--foreground);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font: inherit;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(18, 35, 66, 0.06);
+        border-color: #c3d3f5;
+      }
+
+      .button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .button-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      .button-danger {
+        background: var(--danger-soft);
+        border-color: #f4cad3;
+        color: var(--danger);
+      }
+
+      .button-ghost {
+        background: #f8fafe;
+      }
+
+      .status-banner {
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        line-height: 1.6;
+      }
+
+      .status-error {
+        background: #fff2f4;
+        border: 1px solid #ffd4dc;
+        color: #9e3244;
+      }
+
+      .status-success {
+        background: var(--success-soft);
+        border: 1px solid #c9efd7;
+        color: var(--success);
+      }
+
+      .status-info {
+        background: var(--info-soft);
+        border: 1px solid #cfdfff;
+        color: #2456b8;
+      }
+
+      .table-meta,
+      .question-card-head,
+      .question-foot,
+      .pagination-bar,
+      .form-actions,
+      .row-actions,
+      .config-card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .table-meta {
+        margin-bottom: 16px;
+        color: var(--muted);
+      }
+
+      .question-list,
+      .config-list,
+      .stack-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .question-card,
+      .config-card,
+      .assist-panel {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 20px;
+        background: #fcfdff;
+      }
+
+      .question-meta,
+      .row-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .badge-muted {
+        background: #f1f4fa;
+        color: var(--muted);
+      }
+
+      .badge-warn {
+        background: #fff5e5;
+        color: #b06a00;
+      }
+
+      .badge-success {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .question-card h3,
+      .config-card h3 {
+        margin-bottom: 10px;
+      }
+
+      .question-text,
+      .answer-panel p {
+        white-space: pre-wrap;
+        line-height: 1.8;
+      }
+
+      .answer-panel {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--border);
+      }
+
+      .question-image-frame {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 260px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: #f7faff;
+        overflow: hidden;
+      }
+
+      .question-image-content {
+        display: block;
+        width: 100%;
+        max-height: 420px;
+        object-fit: contain;
+        background: #fff;
+      }
+
+      .inline-link {
+        color: var(--accent);
+      }
+
+      .inline-button {
+        appearance: none;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .empty-state {
+        border: 1px dashed var(--border);
+        border-radius: 18px;
+        padding: 32px 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .pagination-bar {
+        margin-top: 20px;
+      }
+
+      .deduplicate-box {
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .deduplicate-hit {
+        background: #fff7e9;
+        border: 1px solid #ffd990;
+      }
+
+      .deduplicate-safe {
+        background: var(--success-soft);
+        border: 1px solid #c9efd7;
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 20px;
+      }
+
+      .meta-list {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .meta-list div {
+        display: grid;
+        gap: 4px;
+      }
+
+      .meta-list dt {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .meta-list dd {
+        margin: 0;
+        word-break: break-all;
+      }
+
+      .upload-workflow-panel {
+        margin-bottom: 20px;
+      }
+
+      .upload-preview-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .upload-preview-frame {
+        min-height: 220px;
+        border: 1px dashed var(--border);
+        border-radius: 18px;
+        background: #f7faff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .upload-preview-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-height: 320px;
+        object-fit: contain;
+        background: #fff;
+      }
+
+      .readonly-block {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: #f8fbff;
+        color: var(--foreground);
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .image-search-ocr-text {
+        margin-bottom: 16px;
+      }
+
+      .compact-empty-state {
+        padding: 20px 16px;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        background: rgba(9, 20, 42, 0.46);
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal-panel {
+        width: min(760px, 100%);
+        max-height: min(860px, calc(100vh - 56px));
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--surface);
+        box-shadow: 0 28px 80px rgba(9, 20, 42, 0.26);
+        padding: 28px;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      @media (max-width: 860px) {
+        .panel-grid,
+        .upload-preview-layout,
+        .filters-grid,
+        .two-column-grid,
+        .hero-topbar {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .hero-actions {
+          width: 100%;
+        }
+
+        .app-shell-root {
+          padding: 18px 14px 40px;
+        }
+
+        .app-frame {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+
+        .app-sidebar {
+          display: none;
+        }
+
+        .mobile-shell-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 16px;
+          padding: 10px 2px 0;
+        }
+
+        .content-hero {
+          margin-bottom: 18px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .hero,
+        .page-block,
+        .question-card,
+        .config-card,
+        .assist-panel {
+          padding: 18px;
+          border-radius: 18px;
+        }
+
+        .sidebar-link {
+          padding: 14px 16px;
+        }
+
+        .hero h1 {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell-root">
+      <div class="app-frame">
+        <aside class="app-sidebar">
+          <div class="sidebar-brand">
+            <span class="eyebrow">Problem Record</span>
+            <h2>做题记录系统</h2>
+            <p>单用户题库、错题沉淀与 LLM 配置管理。</p>
+          </div>
+
+          <nav class="sidebar-nav" aria-label="主导航">
+            <a href="#questions" class="sidebar-link sidebar-link-active" data-view-link="questions">
+              <strong>题目列表</strong>
+              <span>浏览题目、筛选结果、查看答案与进入编辑。</span>
+            </a>
+            <a href="#new" class="sidebar-link" data-view-link="new">
+              <strong>新增题目</strong>
+              <span>录入题目、执行查重并补充参考答案。</span>
+            </a>
+            <a href="#llm" class="sidebar-link" data-view-link="llm">
+              <strong>LLM 配置</strong>
+              <span>维护 OpenAI 兼容配置、启用状态与连接测试。</span>
+            </a>
+          </nav>
+        </aside>
+
+        <section class="app-main">
+          <header class="mobile-shell-header">
+            <button type="button" class="menu-toggle" aria-label="打开导航菜单" id="openDrawer">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+
+            <div class="mobile-shell-title">
+              <span class="eyebrow">Problem Record</span>
+              <strong id="mobileTitle">题目列表</strong>
+            </div>
+          </header>
+
+          <section class="hero hero-compact content-hero">
+            <div class="hero-topbar">
+              <div>
+                <span class="eyebrow">Workspace</span>
+                <h1 id="heroTitle">题目列表</h1>
+                <p id="heroDescription">在首页集中完成分页浏览、筛选、删除和答案查看，保持后续 OCR/查重能力的接入空间。</p>
+              </div>
+              <div class="hero-actions" id="heroActions">
+                <button type="button" class="button button-primary" data-switch="new">新增题目</button>
+                <button type="button" class="button" data-switch="llm">管理 LLM</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="app-content">
+            <section class="view active" id="view-questions">
+              <section class="page-block">
+                <div class="section-heading">
+                  <div>
+                    <h2 id="searchHeading">筛选与检索</h2>
+                    <p id="searchDescription">默认按最近更新时间倒序。</p>
+                  </div>
+                  <div class="segmented-control" aria-label="搜索方式">
+                    <button type="button" class="segmented-active" id="filterMode">筛选搜索</button>
+                    <button type="button" id="imageMode">图片搜索</button>
+                  </div>
+                </div>
+
+                <div id="filterPanel" class="filters-grid">
+                  <label class="field">
+                    <span>关键词</span>
+                    <input id="keyword" placeholder="按题目文本搜索" />
+                  </label>
+
+                  <label class="field">
+                    <span>主科目</span>
+                    <select id="mainSubject">
+                      <option value="">全部</option>
+                      <option value="数学">数学</option>
+                      <option value="408">408</option>
+                    </select>
+                  </label>
+
+                  <label class="field">
+                    <span>子科目</span>
+                    <select id="subSubject">
+                      <option value="">全部</option>
+                      <option value="高数">高数</option>
+                      <option value="线代">线代</option>
+                      <option value="概率论">概率论</option>
+                      <option value="数据结构">数据结构</option>
+                      <option value="计组">计组</option>
+                      <option value="操作系统">操作系统</option>
+                      <option value="计网">计网</option>
+                    </select>
+                  </label>
+
+                  <label class="field">
+                    <span>错题状态</span>
+                    <select id="wrongState">
+                      <option value="">全部</option>
+                      <option value="true">仅错题</option>
+                      <option value="false">仅非错题</option>
+                    </select>
+                  </label>
+
+                  <label class="field">
+                    <span>每页数量</span>
+                    <select id="pageSize">
+                      <option>10 条</option>
+                      <option>20 条</option>
+                      <option>50 条</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div id="imagePanel" class="image-search-panel" hidden>
+                  <label class="button button-primary image-search-upload">
+                    上传图片搜索
+                    <input type="file" accept="image/*" id="imageInput" />
+                  </label>
+                  <span class="muted-text" id="imageFileName"></span>
+                </div>
+
+                <div class="readonly-block image-search-ocr-text" id="ocrText" hidden></div>
+
+                <div class="table-meta">
+                  <strong id="totalText">共 4 题</strong>
+                  <span id="pageText">第 1 / 1 页</span>
+                </div>
+
+                <div class="empty-state" id="emptyState" hidden>当前筛选条件下还没有题目。</div>
+                <div class="question-list" id="questionList"></div>
+
+                <div class="pagination-bar">
+                  <button type="button" class="button" disabled>上一页</button>
+                  <button type="button" class="button" disabled>下一页</button>
+                </div>
+              </section>
+            </section>
+
+            <section class="view" id="view-new">
+              <section class="page-block form-page">
+                <div class="section-heading">
+                  <div>
+                    <h2>题目录入</h2>
+                    <p>创建题目必须先上传图片，系统会自动识别题目文本并判断是否重复。</p>
+                  </div>
+                </div>
+
+                <div class="status-banner status-success" id="createSuccess" hidden>
+                  自动识别和匹配完成，请确认题目文本、科目和答案后再提交。
+                </div>
+
+                <section class="assist-panel upload-workflow-panel">
+                  <div class="section-heading">
+                    <div>
+                      <h3>自动识别匹配阶段</h3>
+                      <p>上传题图后，系统会自动执行 OCR、pg_trgm 候选检索和题目存在性判断。</p>
+                    </div>
+                    <button type="button" class="button" id="resetCreate" hidden>重新上传图片</button>
+                  </div>
+
+                  <div class="stack-form">
+                    <label class="field">
+                      <span>题目图片</span>
+                      <input type="file" accept="image/*" id="createImage" />
+                      <small>当前选择：<span id="createImageName">尚未选择图片</span>。图片会保存到本地项目目录，<code>image_url</code> 由系统自动生成。</small>
+                    </label>
+
+                    <div class="form-actions">
+                      <button type="button" class="button button-primary" id="recognizeBtn">开始识别匹配</button>
+                    </div>
+
+                    <div class="deduplicate-box deduplicate-safe" id="recognitionBox" hidden>
+                      <strong>识别结果</strong>
+                      <p>OCR 已返回题目文本，候选匹配数量：3。</p>
+                      <p>未检测到重复题，已识别为数学 / 概率论。</p>
+                    </div>
+                  </div>
+                </section>
+
+                <form class="stack-form" id="questionForm" hidden>
+                  <section class="assist-panel">
+                    <div class="section-heading">
+                      <div>
+                        <h3>题图信息</h3>
+                        <p>图片已经保存到本地项目目录，下面展示系统生成的题图地址。</p>
+                      </div>
+                    </div>
+
+                    <div class="upload-preview-layout">
+                      <div class="upload-preview-frame">
+                        <div class="empty-state compact-empty-state">暂无题图预览</div>
+                      </div>
+
+                      <div class="stack-form">
+                        <div class="field">
+                          <span>图片路径</span>
+                          <div class="readonly-block">/uploads/question-images/demo-question.jpg</div>
+                        </div>
+                        <a href="#" class="inline-link">打开原图</a>
+                      </div>
+                    </div>
+                  </section>
+
+                  <label class="field">
+                    <span>题目文本</span>
+                    <textarea rows="8" required>设随机变量 X 服从参数为 lambda 的指数分布，求 E(X)。</textarea>
+                  </label>
+
+                  <div class="two-column-grid">
+                    <label class="field">
+                      <span>主科目</span>
+                      <select>
+                        <option>数学</option>
+                        <option>408</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>子科目</span>
+                      <select>
+                        <option>概率论</option>
+                        <option>高数</option>
+                        <option>线代</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="two-column-grid">
+                    <label class="field field-checkbox">
+                      <span>错题标记</span>
+                      <input type="checkbox" />
+                      <small>用户确认阶段选择是否错题。</small>
+                    </label>
+
+                    <div class="field">
+                      <span>当前流程</span>
+                      <div class="readonly-block">自动识别匹配已完成，当前处于用户确认阶段。</div>
+                    </div>
+                  </div>
+
+                  <label class="field">
+                    <span>参考答案</span>
+                    <textarea rows="8" placeholder="支持保存 Markdown 文本">指数分布的期望为 `1 / lambda`。</textarea>
+                  </label>
+
+                  <div class="form-actions">
+                    <button type="submit" class="button button-primary">确定并创建题目</button>
+                    <button type="button" class="button" data-switch="questions">取消</button>
+                  </div>
+                </form>
+              </section>
+            </section>
+
+            <section class="view" id="view-llm">
+              <section class="page-block">
+                <div class="section-heading">
+                  <div>
+                    <h2>配置列表</h2>
+                    <p>配置按功能模块分组展示，列表仅展示脱敏后的 API Key。</p>
+                  </div>
+                </div>
+
+                <div class="config-list">
+                  <section class="assist-panel">
+                    <div class="section-heading">
+                      <div>
+                        <h3>题目匹配与科目识别模块</h3>
+                        <p>用于题目存在性判断、重复题匹配和主子科目识别。</p>
+                      </div>
+                    </div>
+
+                    <div class="config-list">
+                      <article class="config-card">
+                        <div class="config-card-head">
+                          <div>
+                            <h3>default-openai</h3>
+                            <p>gpt-4o-mini</p>
+                          </div>
+                          <span class="badge badge-success">已启用</span>
+                        </div>
+
+                        <dl class="meta-list">
+                          <div>
+                            <dt>Provider</dt>
+                            <dd>openai</dd>
+                          </div>
+                          <div>
+                            <dt>Base URL</dt>
+                            <dd>https://api.openai.com/v1</dd>
+                          </div>
+                          <div>
+                            <dt>API Key</dt>
+                            <dd>sk-************8A2C</dd>
+                          </div>
+                        </dl>
+
+                        <div class="row-actions">
+                          <button type="button" class="button" data-open-modal>编辑</button>
+                          <button type="button" class="button button-primary" disabled>当前启用</button>
+                          <button type="button" class="button button-danger">删除</button>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <section class="assist-panel">
+                    <div class="section-heading">
+                      <div>
+                        <h3>OCR 模块</h3>
+                        <p>用于识别题目图片中的题干文本并输出 Markdown。</p>
+                      </div>
+                    </div>
+                    <div class="empty-state compact-empty-state">当前模块还没有配置。</div>
+                  </section>
+                </div>
+              </section>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <aside class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-head">
+          <div>
+            <span class="eyebrow">Navigate</span>
+            <h3>页面切换</h3>
+          </div>
+          <button type="button" class="drawer-close" aria-label="关闭导航菜单" id="closeDrawer">×</button>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="移动端主导航">
+          <a href="#questions" class="sidebar-link sidebar-link-active" data-view-link="questions">
+            <strong>题目列表</strong>
+            <span>浏览题目、筛选结果、查看答案与进入编辑。</span>
+          </a>
+          <a href="#new" class="sidebar-link" data-view-link="new">
+            <strong>新增题目</strong>
+            <span>录入题目、执行查重并补充参考答案。</span>
+          </a>
+          <a href="#llm" class="sidebar-link" data-view-link="llm">
+            <strong>LLM 配置</strong>
+            <span>维护 OpenAI 兼容配置、启用状态与连接测试。</span>
+          </a>
+        </nav>
+      </aside>
+    </main>
+
+    <div class="modal-backdrop" id="configModal" role="presentation">
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="llm-config-dialog-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="llm-config-dialog-title">编辑配置 #1</h2>
+            <p>先选择所属功能模块。编辑已有配置时，API Key 留空表示沿用后端现存值。</p>
+          </div>
+          <button type="button" class="drawer-close" aria-label="关闭配置弹窗" id="closeModal">×</button>
+        </div>
+
+        <form class="stack-form">
+          <label class="field">
+            <span>配置名称</span>
+            <input value="default-openai" required />
+          </label>
+
+          <div class="two-column-grid">
+            <label class="field">
+              <span>所属模块</span>
+              <select>
+                <option>题目匹配与科目识别模块</option>
+                <option>OCR 模块</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Provider</span>
+              <select>
+                <option>openai</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two-column-grid">
+            <label class="field">
+              <span>模型名称</span>
+              <input value="gpt-4o-mini" required />
+            </label>
+
+            <div class="field">
+              <span>模块说明</span>
+              <div class="readonly-block">用于题目存在性判断、重复题匹配和主子科目识别。</div>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Base URL</span>
+            <input type="url" value="https://api.openai.com/v1" required />
+          </label>
+
+          <label class="field">
+            <span>新 API Key（可留空）</span>
+            <input type="password" placeholder="留空则保持原值" />
+          </label>
+
+          <label class="field field-checkbox">
+            <span>保存后立即启用</span>
+            <input type="checkbox" checked />
+            <small>只会停用当前模块下的其它已启用配置。</small>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="button button-primary">保存配置</button>
+            <button type="button" class="button" id="testConfig">测试连接</button>
+            <button type="button" class="button">重置</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      const questions = [
+        {
+          id: 1,
+          question_text: "设 A 为 n 阶矩阵，证明 rank(A) + dim N(A) = n。",
+          main_subject: "数学",
+          sub_subject: "线代",
+          is_wrong: false,
+          image_url: null,
+          reference_answer: "这是秩-零化度定理。线性变换的定义域维数等于像空间维数与核空间维数之和。",
+          updated_at: "2026-04-28T20:14:00"
+        },
+        {
+          id: 2,
+          question_text: "Dijkstra 算法为什么不能处理带负权边的最短路径？",
+          main_subject: "408",
+          sub_subject: "数据结构",
+          is_wrong: true,
+          image_url: null,
+          reference_answer: "Dijkstra 每次确认当前距离最小的顶点，依赖非负边保证该距离不会再被更短路径更新。若存在负权边，已确认顶点可能被后续路径重新降低。",
+          updated_at: "2026-04-29T11:21:00"
+        },
+        {
+          id: 3,
+          question_text: "进程和线程的区别是什么？为什么线程切换通常更轻量？",
+          main_subject: "408",
+          sub_subject: "操作系统",
+          is_wrong: true,
+          image_url: null,
+          reference_answer: "进程拥有独立地址空间和资源，线程共享所属进程资源。线程切换通常不需要切换完整地址空间，因此开销更低。",
+          updated_at: "2026-04-28T16:32:00"
+        },
+        {
+          id: 4,
+          question_text: "求函数 f(x)=x ln x 在 x=1 处的泰勒展开前两项。",
+          main_subject: "数学",
+          sub_subject: "高数",
+          is_wrong: false,
+          image_url: null,
+          reference_answer: "f(1)=0，f'(x)=ln x+1，f'(1)=1，因此前两项为 x-1。",
+          updated_at: "2026-04-27T09:45:00"
+        }
+      ];
+
+      let searchMode = "filters";
+      let visibleItems = [...questions];
+      const titles = {
+        questions: {
+          title: "题目列表",
+          mobile: "题目列表",
+          description: "在首页集中完成分页浏览、筛选、删除和答案查看，保持后续 OCR/查重能力的接入空间。",
+          actions: '<button type="button" class="button button-primary" data-switch="new">新增题目</button><button type="button" class="button" data-switch="llm">管理 LLM</button>'
+        },
+        new: {
+          title: "新增题目",
+          mobile: "新增题目",
+          description: "先上传题目图片完成 OCR、pg_trgm 候选匹配与 LLM 判重，再进入人工确认阶段。",
+          actions: '<button type="button" class="button" data-switch="questions">返回列表</button>'
+        },
+        llm: {
+          title: "LLM 配置",
+          mobile: "LLM 配置",
+          description: "按功能模块管理 LLM 配置。每个模块允许保存多条 Provider 配置，但同一模块只允许启用一条。",
+          actions: '<button type="button" class="button button-primary" data-open-modal>新增配置</button>'
+        }
+      };
+
+      function formatDate(value) {
+        return new Intl.DateTimeFormat("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(new Date(value));
+      }
+
+      function renderQuestions(items) {
+        const list = document.querySelector("#questionList");
+        list.innerHTML = "";
+        document.querySelector("#emptyState").hidden = items.length > 0;
+
+        items.forEach((item) => {
+          const article = document.createElement("article");
+          article.className = "question-card";
+          article.innerHTML = `
+            <div class="question-card-head">
+              <div class="question-meta">
+                <span class="badge">${item.main_subject}</span>
+                <span class="badge badge-muted">${item.sub_subject}</span>
+                ${item.is_wrong ? '<span class="badge badge-warn">错题</span>' : ""}
+                ${item.similarity_score ? `<span class="badge badge-success">相似度 ${(item.similarity_score * 100).toFixed(1)}%</span>` : ""}
+              </div>
+              <div class="row-actions">
+                <button type="button" class="button button-ghost" data-answer="${item.id}">查看答案</button>
+                <button type="button" class="button button-ghost" data-switch="new">编辑</button>
+                <button type="button" class="button button-danger" data-delete="${item.id}">删除</button>
+              </div>
+            </div>
+            <h3>题目 #${item.id}</h3>
+            <p class="question-text">${item.question_text}</p>
+            <div class="question-foot">
+              <span>更新时间：${formatDate(item.updated_at)}</span>
+              <span class="muted-text">无题图</span>
+            </div>
+            <div class="answer-panel" id="answer-${item.id}" hidden>
+              <strong>参考答案</strong>
+              <p>${item.reference_answer || "暂无参考答案。"}</p>
+            </div>
+          `;
+          list.appendChild(article);
+        });
+
+        document.querySelector("#totalText").textContent =
+          searchMode === "filters" ? `共 ${items.length} 题` : `候选结果 ${items.length} 题`;
+        document.querySelector("#pageText").textContent =
+          searchMode === "filters" ? "第 1 / 1 页" : "已完成 OCR 与相似度排序";
+      }
+
+      function applyFilters() {
+        const keyword = document.querySelector("#keyword").value.trim();
+        const main = document.querySelector("#mainSubject").value;
+        const sub = document.querySelector("#subSubject").value;
+        const wrong = document.querySelector("#wrongState").value;
+        visibleItems = questions.filter((item) => {
+          return (
+            (!keyword || item.question_text.includes(keyword) || item.reference_answer.includes(keyword)) &&
+            (!main || item.main_subject === main) &&
+            (!sub || item.sub_subject === sub) &&
+            (!wrong || String(item.is_wrong) === wrong)
+          );
+        });
+        renderQuestions(visibleItems);
+      }
+
+      function switchView(name) {
+        document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+        document.querySelector(`#view-${name}`).classList.add("active");
+        document.querySelectorAll("[data-view-link]").forEach((link) => {
+          link.classList.toggle("sidebar-link-active", link.dataset.viewLink === name);
+        });
+        document.querySelector("#heroTitle").textContent = titles[name].title;
+        document.querySelector("#mobileTitle").textContent = titles[name].mobile;
+        document.querySelector("#heroDescription").textContent = titles[name].description;
+        document.querySelector("#heroActions").innerHTML = titles[name].actions;
+        closeDrawer();
+      }
+
+      function setSearchMode(nextMode) {
+        searchMode = nextMode;
+        const isImage = nextMode === "image";
+        document.querySelector("#filterPanel").hidden = isImage;
+        document.querySelector("#imagePanel").hidden = !isImage;
+        document.querySelector("#ocrText").hidden = true;
+        document.querySelector("#searchHeading").textContent = isImage ? "图片搜索" : "筛选与检索";
+        document.querySelector("#searchDescription").textContent = isImage
+          ? "上传题图后执行 OCR，并按 pg_trgm 相似度返回最多 20 个候选结果。"
+          : "默认按最近更新时间倒序。";
+        document.querySelector("#filterMode").classList.toggle("segmented-active", !isImage);
+        document.querySelector("#imageMode").classList.toggle("segmented-active", isImage);
+        renderQuestions(isImage ? [] : questions);
+      }
+
+      function openDrawer() {
+        document.querySelector("#drawerBackdrop").classList.add("drawer-backdrop-visible");
+        document.querySelector("#mobileDrawer").classList.add("mobile-drawer-open");
+      }
+
+      function closeDrawer() {
+        document.querySelector("#drawerBackdrop").classList.remove("drawer-backdrop-visible");
+        document.querySelector("#mobileDrawer").classList.remove("mobile-drawer-open");
+      }
+
+      document.addEventListener("click", (event) => {
+        const switchButton = event.target.closest("[data-switch]");
+        if (switchButton) {
+          switchView(switchButton.dataset.switch);
+          return;
+        }
+
+        const link = event.target.closest("[data-view-link]");
+        if (link) {
+          event.preventDefault();
+          switchView(link.dataset.viewLink);
+          return;
+        }
+
+        const answerButton = event.target.closest("[data-answer]");
+        if (answerButton) {
+          const id = answerButton.dataset.answer;
+          const panel = document.querySelector(`#answer-${id}`);
+          panel.hidden = !panel.hidden;
+          answerButton.textContent = panel.hidden ? "查看答案" : "收起答案";
+          return;
+        }
+
+        const deleteButton = event.target.closest("[data-delete]");
+        if (deleteButton) {
+          visibleItems = visibleItems.filter((item) => String(item.id) !== deleteButton.dataset.delete);
+          renderQuestions(visibleItems);
+          return;
+        }
+
+        if (event.target.closest("[data-open-modal]")) {
+          document.querySelector("#configModal").classList.add("open");
+        }
+      });
+
+      document.querySelector("#keyword").addEventListener("input", applyFilters);
+      document.querySelector("#mainSubject").addEventListener("change", applyFilters);
+      document.querySelector("#subSubject").addEventListener("change", applyFilters);
+      document.querySelector("#wrongState").addEventListener("change", applyFilters);
+      document.querySelector("#filterMode").addEventListener("click", () => setSearchMode("filters"));
+      document.querySelector("#imageMode").addEventListener("click", () => setSearchMode("image"));
+
+      document.querySelector("#imageInput").addEventListener("change", (event) => {
+        const name = event.target.files[0]?.name || "question.png";
+        document.querySelector("#imageFileName").textContent = `当前图片：${name}`;
+        document.querySelector("#ocrText").hidden = false;
+        document.querySelector("#ocrText").textContent =
+          "Dijkstra 算法为什么不能处理带负权边的最短路径？";
+        renderQuestions([
+          { ...questions[1], similarity_score: 0.93 },
+          { ...questions[2], similarity_score: 0.41 }
+        ]);
+      });
+
+      document.querySelector("#createImage").addEventListener("change", (event) => {
+        document.querySelector("#createImageName").textContent = event.target.files[0]?.name || "尚未选择图片";
+      });
+
+      document.querySelector("#recognizeBtn").addEventListener("click", () => {
+        document.querySelector("#recognitionBox").hidden = false;
+        document.querySelector("#questionForm").hidden = false;
+        document.querySelector("#createSuccess").hidden = false;
+        document.querySelector("#resetCreate").hidden = false;
+      });
+
+      document.querySelector("#questionForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        switchView("questions");
+      });
+
+      document.querySelector("#openDrawer").addEventListener("click", openDrawer);
+      document.querySelector("#closeDrawer").addEventListener("click", closeDrawer);
+      document.querySelector("#drawerBackdrop").addEventListener("click", closeDrawer);
+      document.querySelector("#closeModal").addEventListener("click", () => {
+        document.querySelector("#configModal").classList.remove("open");
+      });
+      document.querySelector("#configModal").addEventListener("click", (event) => {
+        if (event.target.id === "configModal") {
+          document.querySelector("#configModal").classList.remove("open");
+        }
+      });
+      document.querySelector("#testConfig").addEventListener("click", () => {
+        const info = document.createElement("div");
+        info.className = "status-banner status-info";
+        info.textContent = "连接测试通过。";
+        document.querySelector(".modal-panel .stack-form").prepend(info);
+      });
+
+      renderQuestions(questions);
+    </script>
+  </body>
+</html>
